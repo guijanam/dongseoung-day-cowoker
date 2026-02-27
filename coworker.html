@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>근무자 리스트 (Supabase Ver.)</title>
+  <style>
+    /* ✅ CSS 변수 정의 - 라이트/다크 모드 */
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #333333;
+      --border-color: #ddd;
+      --tab-bg: #f8f9fa;
+      --tab-text: #495057;
+      --tab-active-bg: #e9ecef;
+      --input-bg: #ffffff;
+      --input-border: #ccc;
+      --container-bg: #ffffff;
+      --card-bg: #f9f9f9;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+      --worker-name: #007bff;
+      --turn-hyu: #ffcccc;
+      --turn-dae: #d4f4c9;
+      --turn-default: #e0e0e0;
+      --toast-bg: rgba(50, 50, 50, 0.9);
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #1a1a2e;
+      --text-color: #e0e0e0;
+      --border-color: #3a3a5a;
+      --tab-bg: #16213e;
+      --tab-text: #b0b0c0;
+      --tab-active-bg: #0f3460;
+      --input-bg: #16213e;
+      --input-border: #3a3a5a;
+      --container-bg: #16213e;
+      --card-bg: #1a1a2e;
+      --shadow-color: rgba(0, 0, 0, 0.3);
+      --worker-name: #6db3f2;
+      --turn-hyu: #5c3a3a;
+      --turn-dae: #3a5c3a;
+      --turn-default: #4a4a4a;
+      --toast-bg: rgba(30, 30, 50, 0.95);
+    }
+
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 10px; 
+      text-align: center; 
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    #datetime {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-align: center;
+      color: var(--text-color);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tabs {
+      display: flex;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      z-index: 10;
+      background-color: var(--tab-bg);
+      border-top: 1px solid var(--border-color);
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .tab {
+      flex-grow: 1;
+      padding: 10px 15px;
+      cursor: pointer;
+      border: none;
+      border-left: 1px solid var(--border-color);
+      font-weight: bold;
+      color: var(--tab-text);
+      font-size: 14px;
+      background-color: var(--tab-bg);
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+    .tab:first-child { border-left: none; }
+    .tab.active { 
+      background-color: var(--tab-active-bg); 
+      border-bottom: 3px solid #4a90d9; 
+    }
+
+    .controls-wrapper {
+      margin-bottom: 10px;
+    }
+
+    .controls-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .date-picker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-picker input {
+      font-size: 14px;
+      padding: 5px;
+      width: 130px;
+      border: 1px solid var(--input-border);
+      border-radius: 5px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .date-picker span {
+      font-size: 14px;
+      font-weight: bold;
+      min-width: 30px;
+    }
+
+    .theme-switch-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .theme-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .theme-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #4a90d9;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .theme-icon {
+      font-size: 14px;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .container { 
+      max-width: 500px; 
+      margin: auto; 
+      padding: 5px;
+      border: 1px solid var(--border-color); 
+      border-radius: 5px; 
+      box-shadow: 2px 2px 10px var(--shadow-color); 
+      height: calc(100vh - 200px);
+      overflow-y: auto; 
+      padding-bottom: 50px;
+      background-color: var(--container-bg);
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    ul { list-style: none; padding: 0; }
+
+    .search-box { margin-bottom: 10px; } 
+    .search-box input { 
+      width: 80%; 
+      padding: 8px; 
+      font-size: 14px; 
+      border: 1px solid var(--input-border); 
+      border-radius: 5px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .worker-item { 
+      padding: 4px 8px; 
+      border-bottom: 1px solid var(--border-color); 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      transition: border-color 0.3s;
+    }
+
+    .worker-card { 
+      width: 100%; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; /* 세로 중앙 정렬 */
+      padding: 10px; 
+      border-radius: 8px; 
+      background-color: var(--card-bg); 
+      box-shadow: 2px 2px 5px var(--shadow-color);
+      transition: background-color 0.3s;
+    }
+
+    .worker-left {
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .worker-name { 
+      font-size: 16px; 
+      font-weight: bold; 
+      color: var(--worker-name);
+      transition: color 0.3s;
+    }
+
+    /* ✅ 전화번호 및 아이콘 스타일 */
+    .phone-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .phone-number {
+      font-size: 12px;
+      color: var(--text-color);
+      opacity: 0.8;
+    }
+    .phone-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .phone-actions a {
+      text-decoration: none;
+      font-size: 16px;
+      display: inline-block;
+      transition: transform 0.1s;
+    }
+    .phone-actions a:active {
+      transform: scale(1.2);
+    }
+
+    .worker-turn { font-size: 16px; font-weight: bold; min-width: 45px; text-align: right; }
+    .new-turn { color: var(--text-color); font-weight: bold; }
+
+    #toast {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      visibility: hidden;
+      min-width: 240px;
+      max-width: 300px;
+      margin-left: -120px;
+      background-color: var(--toast-bg);
+      color: #fff;
+      text-align: left;
+      border-radius: 10px;
+      padding: 14px 18px;
+      position: fixed;
+      z-index: 9999;
+      left: 50%;
+      bottom: 70px;
+      font-size: 16px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(20px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      transition: opacity 0.4s ease, transform 0.4s ease, background-color 0.3s;
+    }
+
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-icon {
+      font-size: 20px;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <div id="datetime"></div>
+
+  <div class="controls-wrapper">
+    <div class="controls-row">
+      <div class="theme-switch-wrapper">
+        <span class="theme-icon">☀️</span>
+        <label class="theme-switch">
+          <input type="checkbox" id="themeToggle">
+          <span class="slider"></span>
+        </label>
+        <span class="theme-icon">🌙</span>
+      </div>
+
+      <div class="date-picker">
+        <input type="date" id="dateInput" />
+        <span id="dayOfWeek"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="이름으로 검색...">
+  </div>
+
+  <div class="container" id="scrollContainer">
+    <ul id="workerList"></ul>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-engineer">기관사</div>
+    <div class="tab" id="tab-chief">차장</div>
+  </div>
+
+  <div id="toast"><span class="toast-icon">✔️</span><span id="toast-message"></span></div>
+
+  <script>
+    const SUPABASE_URL = 'https://srsyxsddjbojnwvjoera.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc3l4c2RkamJvam53dmpvZXJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3NjY4NTEsImV4cCI6MjA3NDM0Mjg1MX0.wmTrMzDqBs10qL_wBeJJQTjQMuCuvfAmY6_eW2brqT8';
+
+    const { createClient } = supabase; 
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
+
+    let isLoading = false;
+    let currentDate = getTodayDate();
+    let selectedTab = "기관사";
+    let allDataForDay = [];
+    let searchTimeout;
+    let isDarkMode = false;
+
+    // ✅ 전화번호 포맷팅 함수 추가
+    function formatPhoneNumber(num) {
+      if (!num) return "";
+      const cleaned = ('' + num).replace(/\D/g, '');
+      const match = cleaned.match(/^(\d{3})(\d{3,4})(\d{4})$/);
+      if (match) {
+        return `${match[1]}-${match[2]}-${match[3]}`;
+      }
+      return num;
+    }
+
+    function getTodayDate() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function updateDateTime() {
+      const now = new Date();
+      const datetimeText = `${now.getMonth() + 1}월 ${now.getDate()}일(${["일", "월", "화", "수", "목", "금", "토"][now.getDay()]}) ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
+      document.getElementById("datetime").textContent = datetimeText;
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toast-message").textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+      localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+      if (allDataForDay.length > 0) filterAndRender();
+      updateDayOfWeek();
+    }
+
+    function loadSavedTheme() {
+      if (localStorage.getItem('theme') === 'dark') {
+        isDarkMode = true;
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('themeToggle').checked = true;
+      }
+    }
+
+    function switchTab(position) {
+      selectedTab = position; 
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+      document.getElementById(position === "기관사" ? "tab-engineer" : "tab-chief").classList.add("active");
+      filterAndRender(); 
+    }
+
+    async function onDateChange() {
+      currentDate = document.getElementById("dateInput").value; 
+      if (!currentDate) return;
+      updateDayOfWeek();
+      await fetchWorkers(); 
+    }
+
+    async function fetchWorkers() {
+      if (isLoading) return;
+      isLoading = true;
+      document.getElementById("workerList").innerHTML = "";
+
+      try {
+        const { data, error } = await supabaseClient.rpc('get_schedule_by_range', {
+          p_start_date: currentDate, p_end_date: currentDate
+        });
+        if (error) throw error;
+        allDataForDay = data || []; 
+        filterAndRender();
+      } catch (error) {
+        console.error(error);
+        showToast("데이터 로딩 실패");
+      } finally {
+        isLoading = false;
+      }
+    }
+
+    function filterAndRender() {
+      const searchValue = document.getElementById("searchInput").value.trim().toLowerCase();
+      const filtered = allDataForDay.filter(w => 
+        w.staff_position?.trim() === selectedTab && w.name.toLowerCase().includes(searchValue)
+      );
+      filtered.sort(turnSort); 
+      renderWorkers(filtered);
+    }
+
+    function filterWorkers() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(filterAndRender, 300);
+    }
+
+    function turnSort(a, b) {
+      const getDetails = (t) => [t.startsWith("휴")?3:t.startsWith("대")?2:1, parseInt(t.match(/\d+/)?.[0] || 999)];
+      const [cA, vA] = getDetails(a.turn);
+      const [cB, vB] = getDetails(b.turn);
+      const tildeA = a.turn.includes("~") ? 1 : 0;
+      const tildeB = b.turn.includes("~") ? 1 : 0;
+      if (tildeA !== tildeB) return tildeA - tildeB;
+      if (cA !== cB) return cA - cB;
+      return vA - vB;
+    }
+
+    // ✅ renderWorkers 함수 수정 (UI 추가)
+    function renderWorkers(workerList) {
+      const listElement = document.getElementById("workerList");
+      listElement.innerHTML = workerList.length === 0 ? "<li style='padding: 20px;'>표시할 데이터가 없습니다.</li>" : "";
+
+      workerList.forEach(worker => {
+        const listItem = document.createElement("li");
+        listItem.classList.add("worker-item");
+        
+        const isWeekend = ([0, 6].includes(new Date(currentDate).getDay()));
+        const isHolidayTurn = ["31", "32", "33", "34", "35", "36", "37"].includes(worker.turn);
+
+        const colors = isDarkMode ? { "휴": "#5c3a3a", "대": "#3a5c3a", "~": "#4a4a4a", "def": "#2a2a3e" } 
+                                  : { "휴": "#ffcccc", "대": "#d4f4c9", "~": "#e0e0e0", "def": "#f9f9f9" };
+
+        let bgColor = colors.def;
+        if (worker.turn.startsWith("휴") || (isWeekend && isHolidayTurn)) bgColor = colors.휴;
+        else if (worker.turn.startsWith("대")) bgColor = colors.대;
+        if (worker.turn.includes("~")) bgColor = colors["~"];
+
+        // 전화번호 및 앱 연결 로직
+        const rawPhone = worker.phone_number ? worker.phone_number.replace(/\D/g, '') : '';
+        const displayPhone = formatPhoneNumber(worker.phone_number);
+
+        const phoneHTML = rawPhone ? `
+          <div class="phone-row">
+            <span class="phone-number">${displayPhone}</span>
+            <div class="phone-actions">
+              <a href="tel:${rawPhone}">📞</a>
+              <a href="sms:${rawPhone}">💬</a>
+            </div>
+          </div>
+        ` : `<div class="phone-row"><span class="phone-number" style="opacity:0.3;">번호없음</span></div>`;
+
+        listItem.innerHTML = `
+          <div class="worker-card" style="background-color: ${bgColor};">
+            <div class="worker-left">
+              <div class="worker-name">${worker.name}</div>
+              ${phoneHTML}
+            </div>
+            <div class="worker-turn"><span class="new-turn">${worker.turn}</span></div>
+          </div>
+        `;
+
+        listItem.style.opacity = "0";
+        listElement.appendChild(listItem);
+        setTimeout(() => listItem.style.opacity = "1", 50);
+      });
+    }
+
+    function updateDayOfWeek() {
+      const dateStr = document.getElementById("dateInput").value;
+      const daySpan = document.getElementById("dayOfWeek");
+      if (dateStr) {
+        const idx = new Date(dateStr).getDay();
+        daySpan.textContent = ["일", "월", "화", "수", "목", "금", "토"][idx];
+        daySpan.style.color = idx === 0 ? "#ff6b6b" : idx === 6 ? "#4a90d9" : (isDarkMode ? "#e0e0e0" : "black");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadSavedTheme();
+      document.getElementById("dateInput").value = currentDate;
+      updateDayOfWeek(); 
+      fetchWorkers();
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+
+      document.getElementById("tab-engineer").addEventListener("click", () => switchTab("기관사"));
+      document.getElementById("tab-chief").addEventListener("click", () => switchTab("차장"));
+      document.getElementById("dateInput").addEventListener("change", onDateChange);
+      document.getElementById("searchInput").addEventListener("input", filterWorkers);
+      document.getElementById("themeToggle").addEventListener("change", toggleTheme);
+    });
+  </script>
+</body>
+</html>
