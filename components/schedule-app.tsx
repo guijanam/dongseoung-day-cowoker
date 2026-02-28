@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Worker, DiaInfo, DiaDetail, TabType } from "@/lib/types";
-import { getTodayDate, turnSort, getTypeName, extractDiaId, extractOfficeName } from "@/lib/schedule-utils";
+import { getTodayDate, turnSort, getTypeName, getComboTypeName, getNextDateStr, extractDiaId, extractOfficeName } from "@/lib/schedule-utils";
 import { HeaderControls } from "./header-controls";
 import { SearchBar } from "./search-bar";
 import { WorkerList } from "./worker-list";
@@ -23,7 +23,8 @@ export function ScheduleApp() {
   const fetchWorkers = useCallback(async (date: string) => {
     setIsLoading(true);
     try {
-      const [scheduleResult, diaResult, holidayResult] = await Promise.all([
+      const nextDate = getNextDateStr(date);
+      const [scheduleResult, diaResult, holidayResult, nextHolidayResult] = await Promise.all([
         supabase.rpc("get_schedule_by_range", {
           p_start_date: date,
           p_end_date: date,
@@ -36,6 +37,11 @@ export function ScheduleApp() {
           .select("locdate, date_name")
           .eq("locdate", date)
           .eq("is_holiday", "Y"),
+        supabase
+          .from("holidays")
+          .select("locdate")
+          .eq("locdate", nextDate)
+          .eq("is_holiday", "Y"),
       ]);
 
       if (scheduleResult.error) throw scheduleResult.error;
@@ -45,11 +51,14 @@ export function ScheduleApp() {
       setIsHoliday(holiday);
       setHolidayName(holiday ? holidayResult.data![0].date_name : "");
 
+      const isNextHoliday = !nextHolidayResult.error && (nextHolidayResult.data?.length ?? 0) > 0;
+
       if (!diaResult.error && diaResult.data) {
         const map = new Map<string, DiaDetail>();
         const typeName = getTypeName(date, holiday);
+        const comboTypeName = getComboTypeName(date, holiday, isNextHoliday);
         for (const dia of diaResult.data as DiaInfo[]) {
-          if (dia.type_name === typeName) {
+          if (dia.type_name === typeName || dia.type_name === comboTypeName) {
             map.set(`${dia.office_name}_${dia.dia_id}`, {
               work_time: dia.work_time || "",
               first_time: dia.first_time || "",

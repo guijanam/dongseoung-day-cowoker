@@ -37,7 +37,7 @@ export function WorkerCard({ worker, currentDate, diaMap, isHoliday }: WorkerCar
     >
       <div className="flex flex-col gap-1 text-left">
         <div className="flex items-center gap-2">
-          <span className="text-base font-bold text-blue-500 dark:text-blue-400">
+          <span className="min-w-[4em] text-base font-bold text-blue-500 dark:text-blue-400">
             {worker.name}
           </span>
           <span className="text-base font-bold">

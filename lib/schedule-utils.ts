@@ -73,11 +73,38 @@ export function extractDiaId(turn: string): string | null {
   return numMatch ? numMatch[0] : null;
 }
 
-export function getTypeName(dateStr: string, isHoliday = false): string {
+function getDayType(dateStr: string, isHoliday: boolean): string {
   const day = new Date(dateStr).getDay();
-  if (day === 0 || isHoliday) return "휴일";
+  if (day === 0 || isHoliday) return "휴";
   if (day === 6) return "토";
+  return "평";
+}
+
+export function getTypeName(dateStr: string, isHoliday = false): string {
+  const type = getDayType(dateStr, isHoliday);
+  if (type === "휴") return "휴일";
+  if (type === "토") return "토";
   return "평일";
+}
+
+export function getComboTypeName(
+  dateStr: string,
+  isHoliday: boolean,
+  isNextHoliday: boolean
+): string {
+  const nextDate = new Date(dateStr);
+  nextDate.setDate(nextDate.getDate() + 1);
+  const nextDateStr = nextDate.toISOString().slice(0, 10);
+
+  const currType = getDayType(dateStr, isHoliday);
+  const nextType = getDayType(nextDateStr, isNextHoliday);
+  return currType + nextType;
+}
+
+export function getNextDateStr(dateStr: string): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
 }
 
 export function extractOfficeName(patternName: string): string {
