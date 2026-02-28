@@ -43,26 +43,25 @@ export function HeaderControls({
 
   return (
     <div className="mb-2 space-y-2">
-      <div className="text-center text-sm font-bold">
-        {mounted && now ? formatTime(now) : "\u00A0"}
-      </div>
-
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center gap-2 text-sm font-bold">
+        <span>{mounted && now ? formatTime(now) : "\u00A0"}</span>
         {mounted && (
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-6 w-6"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           >
             {theme === "dark" ? (
-              <Moon className="h-4 w-4" />
+              <Moon className="h-3.5 w-3.5" />
             ) : (
-              <Sun className="h-4 w-4" />
+              <Sun className="h-3.5 w-3.5" />
             )}
           </Button>
         )}
+      </div>
 
+      <div className="flex items-center justify-center gap-3">
         <div className="flex items-center gap-2">
           <Input
             type="date"
