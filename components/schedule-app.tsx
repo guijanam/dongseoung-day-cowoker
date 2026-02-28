@@ -60,6 +60,7 @@ export function ScheduleApp() {
         for (const dia of diaResult.data as DiaInfo[]) {
           if (dia.type_name === typeName || dia.type_name === comboTypeName) {
             map.set(`${dia.office_name}_${dia.dia_id}`, {
+              type_name: dia.type_name || "",
               work_time: dia.work_time || "",
               first_time: dia.first_time || "",
               second_time: dia.second_time || "",

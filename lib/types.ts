@@ -16,6 +16,7 @@ export interface DiaInfo {
 }
 
 export interface DiaDetail {
+  type_name: string;
   work_time: string;
   first_time: string;
   second_time: string;

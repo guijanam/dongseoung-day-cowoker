@@ -48,6 +48,11 @@ export function WorkerCard({ worker, currentDate, diaMap, isHoliday }: WorkerCar
               {diaDetail.work_time}
             </span>
           )}
+          {diaDetail?.type_name && (
+            <span className="text-sm text-muted-foreground">
+              {diaDetail.type_name}
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-2">
             {rawPhone ? (
               <>
