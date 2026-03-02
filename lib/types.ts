@@ -13,6 +13,8 @@ export interface DiaInfo {
   work_time: string;
   first_time: string;
   second_time: string;
+  num_tr1: string;
+  num_tr2: string;
 }
 
 export interface DiaDetail {
@@ -20,6 +22,8 @@ export interface DiaDetail {
   work_time: string;
   first_time: string;
   second_time: string;
+  num_tr1: string;
+  num_tr2: string;
 }
 
 export type TabType = "기관사" | "차장";

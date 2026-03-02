@@ -31,7 +31,7 @@ export function ScheduleApp() {
         }),
         supabase
           .from("dia")
-          .select("dia_id, office_name, type_name, work_time, first_time, second_time"),
+          .select("dia_id, office_name, type_name, work_time, first_time, second_time, num_tr1, num_tr2"),
         supabase
           .from("holidays")
           .select("locdate, date_name")
@@ -64,6 +64,8 @@ export function ScheduleApp() {
               work_time: dia.work_time || "",
               first_time: dia.first_time || "",
               second_time: dia.second_time || "",
+              num_tr1: dia.num_tr1 || "",
+              num_tr2: dia.num_tr2 || "",
             });
           }
         }

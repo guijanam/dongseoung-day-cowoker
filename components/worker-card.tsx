@@ -81,13 +81,27 @@ export function WorkerCard({ worker, currentDate, diaMap, isHoliday }: WorkerCar
         </div>
         {diaDetail?.first_time && (
           <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-muted-foreground">
-              {diaDetail.first_time}
-            </span>
-            {diaDetail.second_time && (
-              <span className="text-xs text-muted-foreground">
-                {diaDetail.second_time}
+            <div className="flex items-center gap-1">
+              <span className="min-w-[9em] text-xs text-muted-foreground">
+                {diaDetail.first_time}
               </span>
+              {diaDetail.num_tr1 && (
+                <span className="text-xs text-muted-foreground">
+                  {diaDetail.num_tr1}
+                </span>
+              )}
+            </div>
+            {diaDetail.second_time && (
+              <div className="flex items-center gap-1">
+                <span className="min-w-[9em] text-xs text-muted-foreground">
+                  {diaDetail.second_time}
+                </span>
+                {diaDetail.num_tr2 && (
+                  <span className="text-xs text-muted-foreground">
+                    {diaDetail.num_tr2}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         )}
