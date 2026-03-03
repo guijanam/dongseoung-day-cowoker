@@ -19,10 +19,39 @@ export function ScheduleApp() {
   const [diaMap, setDiaMap] = useState<Map<string, DiaDetail>>(new Map());
   const [isHoliday, setIsHoliday] = useState(false);
   const [holidayName, setHolidayName] = useState("");
+  const [isMaintenance, setIsMaintenance] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState("");
+
+  const checkMaintenance = useCallback(async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from("maintenance")
+        .select("is_active, message")
+        .eq("id", 1)
+        .single();
+
+      if (error || !data) {
+        setIsMaintenance(false);
+        return false;
+      }
+
+      setIsMaintenance(data.is_active);
+      setMaintenanceMessage(data.is_active ? (data.message || "데이터베이스 점검 중입니다.") : "");
+      return data.is_active;
+    } catch {
+      setIsMaintenance(false);
+      return false;
+    }
+  }, []);
 
   const fetchWorkers = useCallback(async (date: string) => {
     setIsLoading(true);
     try {
+      const isUnderMaintenance = await checkMaintenance();
+      if (isUnderMaintenance) {
+        setIsLoading(false);
+        return;
+      }
       const nextDate = getNextDateStr(date);
       const [scheduleResult, diaResult, holidayResult, nextHolidayResult] = await Promise.all([
         supabase.rpc("get_schedule_by_range", {
@@ -77,11 +106,25 @@ export function ScheduleApp() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [checkMaintenance]);
 
   useEffect(() => {
     fetchWorkers(currentDate);
   }, [currentDate, fetchWorkers]);
+
+  // 점검 중일 때 30초마다 상태 재확인
+  useEffect(() => {
+    if (!isMaintenance) return;
+
+    const interval = setInterval(async () => {
+      const stillMaintenance = await checkMaintenance();
+      if (!stillMaintenance) {
+        fetchWorkers(currentDate);
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [isMaintenance, checkMaintenance, fetchWorkers, currentDate]);
 
   const filteredWorkers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -104,6 +147,8 @@ export function ScheduleApp() {
         currentDate={currentDate}
         diaMap={diaMap}
         isHoliday={isHoliday}
+        isMaintenance={isMaintenance}
+        maintenanceMessage={maintenanceMessage}
       />
       <BottomTabs selectedTab={selectedTab} onTabChange={setSelectedTab} />
     </div>

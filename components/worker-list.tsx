@@ -2,6 +2,7 @@
 
 import { Worker, DiaDetail } from "@/lib/types";
 import { WorkerCard } from "./worker-card";
+import { Wrench } from "lucide-react";
 
 interface WorkerListProps {
   workers: Worker[];
@@ -9,9 +10,25 @@ interface WorkerListProps {
   currentDate: string;
   diaMap: Map<string, DiaDetail>;
   isHoliday: boolean;
+  isMaintenance: boolean;
+  maintenanceMessage: string;
 }
 
-export function WorkerList({ workers, isLoading, currentDate, diaMap, isHoliday }: WorkerListProps) {
+export function WorkerList({ workers, isLoading, currentDate, diaMap, isHoliday, isMaintenance, maintenanceMessage }: WorkerListProps) {
+  if (isMaintenance) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3">
+        <Wrench className="h-10 w-10 text-muted-foreground" />
+        <span className="text-sm font-medium text-muted-foreground">
+          {maintenanceMessage}
+        </span>
+        <span className="text-xs text-muted-foreground/60">
+          점검이 완료되면 자동으로 복구됩니다.
+        </span>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">
