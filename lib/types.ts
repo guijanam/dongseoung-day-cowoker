@@ -4,6 +4,7 @@ export interface Worker {
   turn: string;
   staff_position: string;
   pattern_name: string;
+  leave?: boolean;   // 휴직(병가/육아 등) 여부
 }
 
 export interface DiaInfo {
