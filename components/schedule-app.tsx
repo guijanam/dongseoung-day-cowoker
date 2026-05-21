@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Worker, DiaInfo, DiaDetail, TabType } from "@/lib/types";
@@ -10,8 +11,15 @@ import { SearchBar } from "./search-bar";
 import { WorkerList } from "./worker-list";
 import { BottomTabs } from "./bottom-tabs";
 
+const DATE_PARAM_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 export function ScheduleApp() {
-  const [currentDate, setCurrentDate] = useState(getTodayDate);
+  const searchParams = useSearchParams();
+  const initialDate = (() => {
+    const raw = searchParams.get("date");
+    return raw && DATE_PARAM_PATTERN.test(raw) ? raw : getTodayDate();
+  })();
+  const [currentDate, setCurrentDate] = useState(initialDate);
   const [selectedTab, setSelectedTab] = useState<TabType>("기관사");
   const [allDataForDay, setAllDataForDay] = useState<Worker[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
