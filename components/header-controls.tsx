@@ -67,7 +67,7 @@ export function HeaderControls({
             type="date"
             value={currentDate}
             onChange={(e) => e.target.value && onDateChange(e.target.value)}
-            className="h-8 w-[140px] text-sm"
+            className="h-8 w-[160px] text-sm"
           />
           <span className={`min-w-[24px] text-sm font-bold ${dayInfo.colorClass}`}>
             {dayInfo.name}
